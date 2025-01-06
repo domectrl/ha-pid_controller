@@ -30,7 +30,7 @@ dependencies = [
     "async-timeout==4.0.2",
     "attrs==22.2.0",
     "atomicwrites-homeassistant==1.4.1",
-    "awesomeversion==22.9.0",
+    "awesomeversion==24.6.0",
     "bcrypt==4.0.1",
     "certifi>=2021.5.30",
     "ciso8601==2.3.0",
