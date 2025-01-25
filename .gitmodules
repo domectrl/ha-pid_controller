@@ -1,3 +1,3 @@
-[submodule "custom_components/pid_controller/ha-pid_shared"]
-	path = custom_components/pid_controller/ha-pid_shared
-	url = https://github.com/antonverburg/ha-pid_shared
+[submodule "custom_components/pid_controller/pid_shared"]
+	path = custom_components/pid_controller/pid_shared
+	url = https://github.com/antonverburg/pid_shared
