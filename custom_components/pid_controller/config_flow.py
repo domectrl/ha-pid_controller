@@ -1,20 +1,19 @@
 """Config flow for pid integration."""
-from collections.abc import Mapping
+
 import logging
+from collections.abc import Mapping
 from typing import Any, cast
 
 import voluptuous as vol
-
+from homeassistant.components.input_number import DOMAIN as INPUT_NUMBER_DOMAIN
 from homeassistant.components.number import (
     DEFAULT_MAX_VALUE,
     DEFAULT_MIN_VALUE,
     DEFAULT_STEP,
+)
+from homeassistant.components.number import (
     DOMAIN as NUMBER_DOMAIN,
 )
-
-
-from homeassistant.components.input_number import DOMAIN as INPUT_NUMBER_DOMAIN
-
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.const import CONF_MAXIMUM, CONF_MINIMUM, CONF_MODE, CONF_NAME
 from homeassistant.helpers import selector
@@ -24,14 +23,10 @@ from homeassistant.helpers.schema_config_entry_flow import (
 )
 
 from .const import (
-    CONF_CYCLE_TIME,
     CONF_INPUT1,
     CONF_INPUT2,
     CONF_OUTPUT,
     CONF_PID_DIR,
-    CONF_PID_KD,
-    CONF_PID_KI,
-    CONF_PID_KP,
     CONF_STEP,
     DEFAULT_CYCLE_TIME,
     DEFAULT_MODE,
@@ -45,6 +40,12 @@ from .const import (
     MODE_SLIDER,
     PID_DIR_DIRECT,
     PID_DIR_REVERSE,
+)
+from .pid_shared.const import (
+    CONF_CYCLE_TIME,
+    CONF_PID_KD,
+    CONF_PID_KI,
+    CONF_PID_KP,
 )
 
 _LOGGER = logging.getLogger(__name__)

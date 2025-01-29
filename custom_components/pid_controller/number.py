@@ -1,13 +1,15 @@
 """Number entity containing a PID regulator."""
+
 from __future__ import annotations
 
 import logging
 import math
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from dvg_pid_controller import Constants as PID_CONST
+import homeassistant.helpers.config_validation as cv
+import homeassistant.util.dt as dt_util
 import voluptuous as vol
-
+from dvg_pid_controller import Constants as PIDConst
 from homeassistant.components.number import (
     DEFAULT_MAX_VALUE,
     DEFAULT_MIN_VALUE,
@@ -15,7 +17,6 @@ from homeassistant.components.number import (
     PLATFORM_SCHEMA,
     RestoreNumber,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_MAXIMUM,
     CONF_MINIMUM,
@@ -27,27 +28,18 @@ from homeassistant.const import (
     STATE_UNKNOWN,
 )
 from homeassistant.core import CoreState, HomeAssistant, callback
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.reload import async_setup_reload_service
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
-import homeassistant.util.dt as dt_util
 
-from .ha_pid_shared import PidBaseClass
 from .const import (
     ATTR_INPUT1,
     ATTR_INPUT2,
     ATTR_OUTPUT,
-    ATTR_PID_ENABLE,
-    CONF_CYCLE_TIME,
     CONF_INPUT1,
     CONF_INPUT2,
     CONF_OUTPUT,
     CONF_PID_DIR,
-    CONF_PID_KD,
-    CONF_PID_KI,
-    CONF_PID_KP,
     CONF_STEP,
     DEFAULT_CYCLE_TIME,
     DEFAULT_MODE,
@@ -63,6 +55,21 @@ from .const import (
     PID_DIR_REVERSE,
     PLATFORMS,
 )
+from .pid_shared import PidBaseClass
+from .pid_shared.const import (
+    ATTR_PID_ENABLE,
+    ATTR_VALUE,
+    CONF_CYCLE_TIME,
+    CONF_PID_KD,
+    CONF_PID_KI,
+    CONF_PID_KP,
+    SERVICE_ENABLE,
+)
+
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.helpers.entity_platform import AddEntitiesCallback
+    from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
@@ -92,30 +99,43 @@ DEBUG_PID = False
 
 
 async def async_setup_entry(
-    hass: HomeAssistant,
+    hass: HomeAssistant,  # noqa: ARG001
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Initialize PID Controller config entry."""
     async_add_entities([PidEntity(config_entry.options, config_entry.entry_id)])
+    await _async_register_enable_service()
 
 
 async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
     async_add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
+    discovery_info: DiscoveryInfoType | None = None,  # noqa: ARG001
 ) -> None:
     """Set up the number platform."""
     await async_setup_reload_service(hass, DOMAIN, PLATFORMS)
     async_add_entities([PidEntity(config, config.get(CONF_UNIQUE_ID))])
+    await _async_register_enable_service()
+
+
+async def _async_register_enable_service() -> None:
+    """Register the enable-regulator service."""
+    platform = entity_platform.async_get_current_platform()
+
+    platform.async_register_entity_service(
+        SERVICE_ENABLE,
+        cv.make_entity_service_schema({vol.Required(ATTR_VALUE): vol.Coerce(bool)}),
+        "async_enable",
+    )
 
 
 class PidEntity(RestoreNumber, PidBaseClass):
     """Representation of a PID Controller number."""
 
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, config, unique_id: str | None) -> None:
+    def __init__(self, config: Any, unique_id: str | None) -> None:
         """Initialize the PID Controller number."""
         self._config = config
         self._attr_native_min_value = config.get(CONF_MINIMUM, DEFAULT_MIN_VALUE)
@@ -134,16 +154,16 @@ class PidEntity(RestoreNumber, PidBaseClass):
             config.get(CONF_PID_KP, DEFAULT_PID_KP),
             config.get(CONF_PID_KI, DEFAULT_PID_KI),
             config.get(CONF_PID_KD, DEFAULT_PID_KD),
-            PID_CONST.DIRECT
+            PIDConst.DIRECT
             if config.get(CONF_PID_DIR, DEFAULT_PID_DIR) == PID_DIR_DIRECT
-            else PID_CONST.REVERSE,
+            else PIDConst.REVERSE,
             config.get(CONF_CYCLE_TIME, DEFAULT_CYCLE_TIME),
         )
         # setpoint initial to minimum value
         self._pid.setpoint = self._attr_native_min_value
         self._attr_native_value = self._pid.setpoint
 
-    async def async_added_to_hass(self):
+    async def async_added_to_hass(self) -> None:
         """Handle entity about to be added to hass event."""
         await super().async_added_to_hass()
         start_pid_controller = False
@@ -161,7 +181,7 @@ class PidEntity(RestoreNumber, PidBaseClass):
         # After full startup, set outputs and timers & communicate
         # states to the physical outputs
         @callback
-        async def _async_startup(*_):
+        async def _async_startup(*_) -> None:  # noqa: ANN002
             # Request min- and max values from HA, and clip the output
             # of the PID regulator to that
             entity = self.hass.states.get(self._output)
@@ -174,7 +194,7 @@ class PidEntity(RestoreNumber, PidBaseClass):
             # Start PID controller cycles
             await self._async_start_pid_cycle()
             if start_pid_controller:
-                await self.async_enable(True)
+                await self.async_enable(value=True)
 
         if self.hass.state == CoreState.running:
             await _async_startup()
@@ -187,7 +207,7 @@ class PidEntity(RestoreNumber, PidBaseClass):
         return self._config[CONF_NAME]
 
     @property
-    def should_poll(self):
+    def should_poll(self) -> bool:
         """No polling needed."""
         return False
 
@@ -213,7 +233,7 @@ class PidEntity(RestoreNumber, PidBaseClass):
         return attr
 
     @property
-    def unique_id(self):
+    def unique_id(self) -> str | None:
         """Return the unique id of the device."""
         return self._attr_unique_id
 
@@ -226,11 +246,12 @@ class PidEntity(RestoreNumber, PidBaseClass):
             name=self.name,
         )
 
-    async def async_enable(self, value: bool):
+    async def async_enable(self, *, value: bool) -> None:
         """Enable or disable PID regulator."""
-        mode = PID_CONST.MANUAL
+        _LOGGER.info("Enabling PID controller: %s!", str(value))
+        mode = PIDConst.MANUAL
         if value:
-            mode = PID_CONST.AUTOMATIC
+            mode = PIDConst.AUTOMATIC
         input_2 = math.nan
         if self._input_2:
             state_i2 = self.hass.states.get(self._input_2)
@@ -262,7 +283,7 @@ class PidEntity(RestoreNumber, PidBaseClass):
         return self._output
 
     @callback
-    async def _async_pid_cycle(self, args=None):
+    async def _async_pid_cycle(self, *_: Any) -> None:
         """Cycle for PWM timed output."""
         input_1_state = self.hass.states.get(self._input_1)
         if input_1_state in (

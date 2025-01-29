@@ -1,26 +1,31 @@
 """Test the PID controller integration."""
+
 import pytest
+from homeassistant.const import CONF_NAME
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.pid_controller.const import (
     CONF_INPUT1,
     CONF_OUTPUT,
     DOMAIN,
 )
-from homeassistant.const import CONF_NAME
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers import entity_registry as er
-
-from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 
-@pytest.mark.parametrize("platform", ("number",))
+@pytest.mark.parametrize(
+    "platform",
+    [
+        "number",
+    ],
+)
 async def test_setup_and_remove_config_entry(
     hass: HomeAssistant,
     platform: str,
 ) -> None:
     """Test setting up and removing a config entry."""
-    input = "sensor.input"
-    output = "number.output"
+    input_par = "sensor.input"
+    output_par = "number.output"
 
     registry = er.async_get(hass)
     pid_controller_entity_id = f"{platform}.my_pid_controller"
@@ -30,8 +35,8 @@ async def test_setup_and_remove_config_entry(
         data={},
         domain=DOMAIN,
         options={
-            CONF_OUTPUT: output,
-            CONF_INPUT1: input,
+            CONF_OUTPUT: output_par,
+            CONF_INPUT1: input_par,
             CONF_NAME: "My pid_controller",
         },
         title="My pid_controller",

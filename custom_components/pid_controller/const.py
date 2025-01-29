@@ -1,15 +1,6 @@
 """Constants for the PID Controller integration."""
-from homeassistant.const import Platform
 
-from .ha_pid_shared.const import (  # noqa: F401
-    ATTR_PID_ENABLE,
-    ATTR_VALUE,
-    CONF_CYCLE_TIME,
-    CONF_PID_KD,
-    CONF_PID_KI,
-    CONF_PID_KP,
-    SERVICE_ENABLE,
-)
+from homeassistant.const import Platform
 
 DOMAIN = "pid_controller"
 PLATFORMS = [Platform.NUMBER]
