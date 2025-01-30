@@ -10,15 +10,15 @@
     "number",
     "input_number"
   ],
-  "documentation": "https://github.com/ludeeus/antonverburg/ha-pid_controller/issues",
+  "documentation": "https://github.com/domectrl/ha-pid_controller",
   "homekit": {},
   "iot_class": "calculated",
-  "issue_tracker": "https://github.com/ludeeus/antonverburg/ha-pid_controller/issues",
+  "issue_tracker": "https://github.com/domectrl/ha-pid_controller/issues",
   "quality_scale": "platinum",
   "requirements": [
     "dvg-pid-controller==2.2.0"
   ],
   "ssdp": [],
-  "version": "0.9.0",
+  "version": "0.9.4",
   "zeroconf": []
 }
