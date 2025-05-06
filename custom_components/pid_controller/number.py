@@ -26,6 +26,8 @@ from homeassistant.const import (
     EVENT_HOMEASSISTANT_START,
     STATE_UNAVAILABLE,
     STATE_UNKNOWN,
+    SERVICE_TURN_OFF,
+    SERVICE_TURN_ON,
 )
 from homeassistant.core import CoreState, HomeAssistant, callback
 from homeassistant.helpers import entity_platform
@@ -63,7 +65,6 @@ from .pid_shared.const import (
     CONF_PID_KD,
     CONF_PID_KI,
     CONF_PID_KP,
-    SERVICE_ENABLE,
 )
 
 if TYPE_CHECKING:
@@ -124,11 +125,8 @@ async def _async_register_enable_service() -> None:
     """Register the enable-regulator service."""
     platform = entity_platform.async_get_current_platform()
 
-    platform.async_register_entity_service(
-        SERVICE_ENABLE,
-        cv.make_entity_service_schema({vol.Required(ATTR_VALUE): vol.Coerce(bool)}),
-        "async_enable",
-    )
+    platform.async_register_entity_service(SERVICE_TURN_ON, None, "async_turn_on")
+    platform.async_register_entity_service(SERVICE_TURN_OFF, None, "async_turn_off")
 
 
 class PidEntity(RestoreNumber, PidBaseClass):
@@ -194,7 +192,7 @@ class PidEntity(RestoreNumber, PidBaseClass):
             # Start PID controller cycles
             await self._async_start_pid_cycle()
             if start_pid_controller:
-                await self.async_enable(value=True)
+                await self.async_turn_on()
 
         if self.hass.state == CoreState.running:
             await _async_startup()
@@ -246,12 +244,7 @@ class PidEntity(RestoreNumber, PidBaseClass):
             name=self.name,
         )
 
-    async def async_enable(self, *, value: bool) -> None:
-        """Enable or disable PID regulator."""
-        _LOGGER.info("Enabling PID controller: %s!", str(value))
-        mode = PIDConst.MANUAL
-        if value:
-            mode = PIDConst.AUTOMATIC
+    async def _turn(self, mode: int) -> None:
         input_2 = math.nan
         if self._input_2:
             state_i2 = self.hass.states.get(self._input_2)
@@ -266,6 +259,16 @@ class PidEntity(RestoreNumber, PidBaseClass):
                 float(state_o.state),
                 input_2,
             )
+
+    async def async_turn_on(self) -> None:
+        """Turn the entity on."""
+        _LOGGER.info("Turning on PID controller!")
+        await self._turn(PIDConst.AUTOMATIC)
+
+    async def async_turn_off(self) -> None:
+        """Turn the entity off."""
+        _LOGGER.info("Turning off the PID controller!")
+        await self._turn(PIDConst.MANUAL)
 
     @property
     def input_1(self) -> str:
