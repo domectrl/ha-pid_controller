@@ -67,8 +67,15 @@ async def _setup_controller(  # noqa: PLR0913
     await hass.async_block_till_done()
 
 
-async def test_pid_controller_turn_on_off(hass: HomeAssistant, setup_comp) -> None:  # noqa: ANN001, ARG001
-    """Test turn on and turn off for  pid controller (number), using only Kp: output equals error."""
+async def test_pid_controller_turn_on_off(
+    hass: HomeAssistant,
+    setup_comp: None,  # noqa: ARG001
+) -> None:
+    """
+    Test turn on and turn off for  pid controller.
+
+    Using only Kp: output equals error.
+    """
     input_par = "sensor.input1"
     output_par = "number.output"
     pid = f"{Platform.NUMBER}.pid"
@@ -149,7 +156,7 @@ async def test_pid_controller_turn_on_off(hass: HomeAssistant, setup_comp) -> No
     )
 
 
-async def test_pid_controller_kp(hass: HomeAssistant, setup_comp) -> None:  # noqa: ANN001, ARG001
+async def test_pid_controller_kp(hass: HomeAssistant, setup_comp: None) -> None:  # noqa: ARG001
     """Test function Kp for normal pid controller (number): output equals error."""
     input_par = "sensor.input1"
     output_par = "number.output"
@@ -209,7 +216,7 @@ async def test_pid_controller_kp(hass: HomeAssistant, setup_comp) -> None:  # no
     )
 
 
-async def test_pid_controller_kp_reverse(hass: HomeAssistant, setup_comp) -> None:  # noqa: ANN001, ARG001
+async def test_pid_controller_kp_reverse(hass: HomeAssistant, setup_comp: None) -> None:  # noqa: ARG001
     """Test function Kp for normal pid controller (number): output equals error."""
     input_par = "sensor.input1"
     output_par = "number.output"
@@ -294,7 +301,10 @@ async def test_pid_controller_kp_reverse(hass: HomeAssistant, setup_comp) -> Non
     )
 
 
-async def test_pid_controller_kp_differential(hass: HomeAssistant, setup_comp) -> None:  # noqa: ANN001, ARG001
+async def test_pid_controller_kp_differential(
+    hass: HomeAssistant,
+    setup_comp: None,  # noqa: ARG001
+) -> None:
     """Test function Kp for normal pid controller (number): output equals error."""
     input_par = "sensor.input1"
     input2_par = "sensor.input2"
@@ -358,7 +368,7 @@ async def test_pid_controller_kp_differential(hass: HomeAssistant, setup_comp) -
     )
 
 
-async def test_pid_controller_ki(hass: HomeAssistant, setup_comp) -> None:  # noqa: ANN001, ARG001
+async def test_pid_controller_ki(hass: HomeAssistant, setup_comp: None) -> None:  # noqa: ARG001
     """Test Ki function for normal pid controller (number): output should run to max."""
     input_par = "sensor.input1"
     output_par = "number.output"
@@ -419,7 +429,7 @@ async def test_pid_controller_ki(hass: HomeAssistant, setup_comp) -> None:  # no
     await asyncio.sleep(cycle_time * 10)
 
 
-async def test_pid_controller_kd(hass: HomeAssistant, setup_comp) -> None:  # noqa: ANN001, ARG001
+async def test_pid_controller_kd(hass: HomeAssistant, setup_comp: None) -> None:  # noqa: ARG001
     """Test Kd function for normal pid controller (number): output should stay 0."""
     input_par = "sensor.input1"
     output_par = "number.output"
@@ -479,7 +489,11 @@ async def test_pid_controller_kd(hass: HomeAssistant, setup_comp) -> None:  # no
     )
 
 
-async def test_output_does_not_exist(hass: HomeAssistant, setup_comp, caplog) -> None:  # noqa: ANN001, ARG001
+async def test_output_does_not_exist(
+    hass: HomeAssistant,
+    setup_comp: None,  # noqa: ARG001
+    caplog: None,
+) -> None:
     """Test output does not exist."""
     input_par = "sensor.input1"
     output_par = "number.output"
@@ -513,7 +527,7 @@ async def test_output_does_not_exist(hass: HomeAssistant, setup_comp, caplog) ->
     await asyncio.sleep(cycle_time * 10)
 
 
-async def test_outside_range(hass: HomeAssistant, setup_comp) -> None:  # noqa: ANN001, ARG001
+async def test_outside_range(hass: HomeAssistant, setup_comp: None) -> None:  # noqa: ARG001
     """Test what happens if we write a value outside the range."""
     input_par = "sensor.input1"
     output_par = "number.output"
@@ -619,7 +633,7 @@ async def test_outside_range(hass: HomeAssistant, setup_comp) -> None:  # noqa: 
     await asyncio.sleep(cycle_time * 10)
 
 
-async def test_bad_value(hass: HomeAssistant, setup_comp, caplog) -> None:  # noqa: ANN001, ARG001
+async def test_bad_value(hass: HomeAssistant, setup_comp: None, caplog: None) -> None:  # noqa: ARG001
     """Test what happens if we send a bad value."""
     input_par = "sensor.input1"
     output_par = "number.output"

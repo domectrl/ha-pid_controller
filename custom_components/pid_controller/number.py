@@ -24,10 +24,10 @@ from homeassistant.const import (
     CONF_NAME,
     CONF_UNIQUE_ID,
     EVENT_HOMEASSISTANT_START,
-    STATE_UNAVAILABLE,
-    STATE_UNKNOWN,
     SERVICE_TURN_OFF,
     SERVICE_TURN_ON,
+    STATE_UNAVAILABLE,
+    STATE_UNKNOWN,
 )
 from homeassistant.core import CoreState, HomeAssistant, callback
 from homeassistant.helpers import entity_platform
@@ -60,7 +60,6 @@ from .const import (
 from .pid_shared import PidBaseClass
 from .pid_shared.const import (
     ATTR_PID_ENABLE,
-    ATTR_VALUE,
     CONF_CYCLE_TIME,
     CONF_PID_KD,
     CONF_PID_KI,
