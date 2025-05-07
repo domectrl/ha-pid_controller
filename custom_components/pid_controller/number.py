@@ -252,6 +252,8 @@ class PidEntity(RestoreNumber, PidBaseClass):
                 float(state_o.state),
                 input_2,
             )
+        self._attr_extra_state_attributes.update(self.pid_state_attributes)
+        self.schedule_update_ha_state()
 
     async def async_turn_on(self) -> None:
         """Turn the entity on."""
@@ -326,7 +328,6 @@ class PidEntity(RestoreNumber, PidBaseClass):
                 self.hass.states.async_set(
                     self._output, pid_val, state_attr
                 )  # Use set-state to be as much type-independent as possible
-
-        self._attr_last_cycle_start = dt_util.utcnow().replace(microsecond=0)
-        self._attr_extra_state_attributes.update(self.pid_state_attributes)
-        self.schedule_update_ha_state()
+                self._attr_last_cycle_start = dt_util.utcnow().replace(microsecond=0)
+                self._attr_extra_state_attributes.update(self.pid_state_attributes)
+                self.schedule_update_ha_state()

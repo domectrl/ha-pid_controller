@@ -155,4 +155,4 @@ class PIDControllerPWMConfigFlow(SchemaConfigFlowHandler, domain=DOMAIN):
 
     def async_config_entry_title(self, options: Mapping[str, Any]) -> str:
         """Return config entry title."""
-        return cast(str, options["name"]) if CONF_NAME in options else ""
+        return cast("str", options["name"]) if CONF_NAME in options else ""
