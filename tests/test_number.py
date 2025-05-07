@@ -11,6 +11,8 @@ from homeassistant.const import (
     CONF_MINIMUM,
     CONF_NAME,
     CONF_PLATFORM,
+    SERVICE_TURN_OFF,
+    SERVICE_TURN_ON,
     Platform,
 )
 from homeassistant.core import HomeAssistant
@@ -32,7 +34,6 @@ from custom_components.pid_controller.pid_shared.const import (
     CONF_PID_KD,
     CONF_PID_KI,
     CONF_PID_KP,
-    SERVICE_ENABLE,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -66,7 +67,96 @@ async def _setup_controller(  # noqa: PLR0913
     await hass.async_block_till_done()
 
 
-async def test_pid_controller_kp(hass: HomeAssistant, setup_comp) -> None:  # noqa: ANN001, ARG001
+async def test_pid_controller_turn_on_off(
+    hass: HomeAssistant,
+    setup_comp: None,  # noqa: ARG001
+) -> None:
+    """
+    Test turn on and turn off for  pid controller.
+
+    Using only Kp: output equals error.
+    """
+    input_par = "sensor.input1"
+    output_par = "number.output"
+    pid = f"{Platform.NUMBER}.pid"
+
+    cycle_time = 0.01  # Cycle time in seconds
+    config = {
+        Platform.NUMBER: {
+            CONF_PLATFORM: DOMAIN,
+            CONF_NAME: "pid",
+            CONF_INPUT1: input_par,
+            CONF_OUTPUT: output_par,
+            CONF_PID_KP: 1,
+            CONF_PID_KI: 0,
+            CONF_PID_KD: 0,
+            CONF_CYCLE_TIME: {"seconds": cycle_time},
+        }
+    }
+    await _setup_controller(hass, config, input_par, output_par, 10.0, 0.0)
+
+    # On initialize value is 0, so output should be off. Check all states.
+    assert hass.states.get(pid).state == "0.0"
+    assert hass.states.get(input_par).state == "10.0"
+    assert hass.states.get(output_par).state == "0.0"
+
+    # Now set pid setpoint to value 20. Input remains 10, but pid is not yet turned on,
+    # so output state should remain 0.
+    await hass.services.async_call(
+        Platform.NUMBER,
+        SERVICE_SET_VALUE,
+        {ATTR_VALUE: 20, ATTR_ENTITY_ID: pid},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+    assert hass.states.get(pid).state == "20.0"
+    assert hass.states.get(output_par).state == "0.0"
+    await hass.async_block_till_done()
+
+    # Turn on PID controller. Output should run up after a while to 10
+    await hass.services.async_call(
+        "pid_controller",
+        SERVICE_TURN_ON,
+        {ATTR_ENTITY_ID: pid},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+    # Sleep some cyles.
+    await asyncio.sleep(cycle_time * 3)
+    # Check if output is equal to 10, as Kp=1
+    # and difference between in- and output is 10.
+    assert hass.states.get(output_par).state == "10.0"
+
+    # Now test if we can turn the regulator off again
+    await hass.async_block_till_done()
+
+    # Turn on PID controller. Output should run up after a while to 10
+    await hass.services.async_call(
+        "pid_controller",
+        SERVICE_TURN_OFF,
+        {ATTR_ENTITY_ID: pid},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+    hass.states.async_set(output_par, 0.0)
+    await hass.async_block_till_done()
+    # Sleep some cyles.
+    await asyncio.sleep(cycle_time * 3)
+    # Check if output is still equal to 0, as Kp=1
+    # and difference between in- and output is 10
+    # but retulator was turned off
+    assert hass.states.get(output_par).state == "0.0"
+    await hass.async_block_till_done()
+
+    await hass.services.async_call(
+        "homeassistant",
+        "stop",
+        None,
+        blocking=True,
+    )
+
+
+async def test_pid_controller_kp(hass: HomeAssistant, setup_comp: None) -> None:  # noqa: ARG001
     """Test function Kp for normal pid controller (number): output equals error."""
     input_par = "sensor.input1"
     output_par = "number.output"
@@ -92,7 +182,7 @@ async def test_pid_controller_kp(hass: HomeAssistant, setup_comp) -> None:  # no
     assert hass.states.get(input_par).state == "10.0"
     assert hass.states.get(output_par).state == "0.0"
 
-    # Now set pid setpoint to value 20. Input remains 10, but pid is not yet enabled,
+    # Now set pid setpoint to value 20. Input remains 10, but pid is not yet turned on,
     # so output state should remain 0.
     await hass.services.async_call(
         Platform.NUMBER,
@@ -105,11 +195,11 @@ async def test_pid_controller_kp(hass: HomeAssistant, setup_comp) -> None:  # no
     assert hass.states.get(output_par).state == "0.0"
     await hass.async_block_till_done()
 
-    # Enable PID controller. Output should run up after a while to 10
+    # Turn on PID controller. Output should run up after a while to 10
     await hass.services.async_call(
         "pid_controller",
-        SERVICE_ENABLE,
-        {ATTR_VALUE: True, ATTR_ENTITY_ID: pid},
+        SERVICE_TURN_ON,
+        {ATTR_ENTITY_ID: pid},
         blocking=True,
     )
     await hass.async_block_till_done()
@@ -126,7 +216,7 @@ async def test_pid_controller_kp(hass: HomeAssistant, setup_comp) -> None:  # no
     )
 
 
-async def test_pid_controller_kp_reverse(hass: HomeAssistant, setup_comp) -> None:  # noqa: ANN001, ARG001
+async def test_pid_controller_kp_reverse(hass: HomeAssistant, setup_comp: None) -> None:  # noqa: ARG001
     """Test function Kp for normal pid controller (number): output equals error."""
     input_par = "sensor.input1"
     output_par = "number.output"
@@ -161,7 +251,7 @@ async def test_pid_controller_kp_reverse(hass: HomeAssistant, setup_comp) -> Non
     assert hass.states.get(input_par).state == "10.0"
     assert hass.states.get(output_par).state == "0.0"
 
-    # Now set pid setpoint to value 20. Input remains 10, but pid is not yet enabled,
+    # Now set pid setpoint to value 20. Input remains 10, but pid is not yet turned on,
     # so output state should remain 0.
     await hass.services.async_call(
         Platform.NUMBER,
@@ -173,11 +263,11 @@ async def test_pid_controller_kp_reverse(hass: HomeAssistant, setup_comp) -> Non
     assert hass.states.get(pid).state == "20.0"
     assert hass.states.get(output_par).state == "0.0"
 
-    # Enable PID controller. Output should run down after a while to -10
+    # Turn on PID controller. Output should run down after a while to -10
     await hass.services.async_call(
         "pid_controller",
-        SERVICE_ENABLE,
-        {ATTR_VALUE: True, ATTR_ENTITY_ID: pid},
+        SERVICE_TURN_ON,
+        {ATTR_ENTITY_ID: pid},
         blocking=True,
     )
     await hass.async_block_till_done()
@@ -211,7 +301,10 @@ async def test_pid_controller_kp_reverse(hass: HomeAssistant, setup_comp) -> Non
     )
 
 
-async def test_pid_controller_kp_differential(hass: HomeAssistant, setup_comp) -> None:  # noqa: ANN001, ARG001
+async def test_pid_controller_kp_differential(
+    hass: HomeAssistant,
+    setup_comp: None,  # noqa: ARG001
+) -> None:
     """Test function Kp for normal pid controller (number): output equals error."""
     input_par = "sensor.input1"
     input2_par = "sensor.input2"
@@ -242,7 +335,7 @@ async def test_pid_controller_kp_differential(hass: HomeAssistant, setup_comp) -
     assert hass.states.get(input2_par).state == "12.0"
     assert hass.states.get(output_par).state == "0.0"
 
-    # Now set pid setpoint to value 20. Input remains 10, but pid is not yet enabled,
+    # Now set pid setpoint to value 20. Input remains 10, but pid is not yet turned on,
     # so output state should remain 0.
     await hass.services.async_call(
         Platform.NUMBER,
@@ -254,11 +347,11 @@ async def test_pid_controller_kp_differential(hass: HomeAssistant, setup_comp) -
     assert hass.states.get(pid).state == "20.0"
     assert hass.states.get(output_par).state == "0.0"
 
-    # Enable PID controller. Output should run down after a while to -10
+    # Turn on PID controller. Output should run down after a while to -10
     await hass.services.async_call(
         "pid_controller",
-        SERVICE_ENABLE,
-        {ATTR_VALUE: True, ATTR_ENTITY_ID: pid},
+        SERVICE_TURN_ON,
+        {ATTR_ENTITY_ID: pid},
         blocking=True,
     )
     await hass.async_block_till_done()
@@ -275,7 +368,7 @@ async def test_pid_controller_kp_differential(hass: HomeAssistant, setup_comp) -
     )
 
 
-async def test_pid_controller_ki(hass: HomeAssistant, setup_comp) -> None:  # noqa: ANN001, ARG001
+async def test_pid_controller_ki(hass: HomeAssistant, setup_comp: None) -> None:  # noqa: ARG001
     """Test Ki function for normal pid controller (number): output should run to max."""
     input_par = "sensor.input1"
     output_par = "number.output"
@@ -301,7 +394,7 @@ async def test_pid_controller_ki(hass: HomeAssistant, setup_comp) -> None:  # no
     assert hass.states.get(input_par).state == "10.0"
     assert hass.states.get(output_par).state == "0.0"
 
-    # Now set pid setpoint to value 20. Input remains 10, but pid is not yet enabled,
+    # Now set pid setpoint to value 20. Input remains 10, but pid is not yet turned on,
     # so output state should remain 0.
     await hass.services.async_call(
         Platform.NUMBER,
@@ -313,12 +406,12 @@ async def test_pid_controller_ki(hass: HomeAssistant, setup_comp) -> None:  # no
     assert hass.states.get(pid).state == "20.0"
     assert hass.states.get(output_par).state == "0.0"
 
-    # Enable PID controller. Output should run up after a while to 100
+    # Turn on PID controller. Output should run up after a while to 100
     # (as that's the max of the output)
     await hass.services.async_call(
         "pid_controller",
-        SERVICE_ENABLE,
-        {ATTR_VALUE: True, ATTR_ENTITY_ID: pid},
+        SERVICE_TURN_ON,
+        {ATTR_ENTITY_ID: pid},
         blocking=True,
     )
     await hass.async_block_till_done()
@@ -336,7 +429,7 @@ async def test_pid_controller_ki(hass: HomeAssistant, setup_comp) -> None:  # no
     await asyncio.sleep(cycle_time * 10)
 
 
-async def test_pid_controller_kd(hass: HomeAssistant, setup_comp) -> None:  # noqa: ANN001, ARG001
+async def test_pid_controller_kd(hass: HomeAssistant, setup_comp: None) -> None:  # noqa: ARG001
     """Test Kd function for normal pid controller (number): output should stay 0."""
     input_par = "sensor.input1"
     output_par = "number.output"
@@ -362,7 +455,7 @@ async def test_pid_controller_kd(hass: HomeAssistant, setup_comp) -> None:  # no
     assert hass.states.get(input_par).state == "10.0"
     assert hass.states.get(output_par).state == "0.0"
 
-    # Now set pid setpoint to value 20. Input remains 10, but pid is not yet enabled,
+    # Now set pid setpoint to value 20. Input remains 10, but pid is not yet turned on,
     # so output state should remain 0.
     await hass.services.async_call(
         Platform.NUMBER,
@@ -374,12 +467,12 @@ async def test_pid_controller_kd(hass: HomeAssistant, setup_comp) -> None:  # no
     assert hass.states.get(pid).state == "20.0"
     assert hass.states.get(output_par).state == "0.0"
 
-    # Enable PID controller. Output should run up after a while to 100
+    # Turn on PID controller. Output should run up after a while to 100
     # (as that's the max of the output)
     await hass.services.async_call(
         "pid_controller",
-        SERVICE_ENABLE,
-        {ATTR_VALUE: True, ATTR_ENTITY_ID: pid},
+        SERVICE_TURN_ON,
+        {ATTR_ENTITY_ID: pid},
         blocking=True,
     )
     await hass.async_block_till_done()
@@ -396,7 +489,11 @@ async def test_pid_controller_kd(hass: HomeAssistant, setup_comp) -> None:  # no
     )
 
 
-async def test_output_does_not_exist(hass: HomeAssistant, setup_comp, caplog) -> None:  # noqa: ANN001, ARG001
+async def test_output_does_not_exist(
+    hass: HomeAssistant,
+    setup_comp: None,  # noqa: ARG001
+    caplog: None,
+) -> None:
     """Test output does not exist."""
     input_par = "sensor.input1"
     output_par = "number.output"
@@ -430,7 +527,7 @@ async def test_output_does_not_exist(hass: HomeAssistant, setup_comp, caplog) ->
     await asyncio.sleep(cycle_time * 10)
 
 
-async def test_outside_range(hass: HomeAssistant, setup_comp) -> None:  # noqa: ANN001, ARG001
+async def test_outside_range(hass: HomeAssistant, setup_comp: None) -> None:  # noqa: ARG001
     """Test what happens if we write a value outside the range."""
     input_par = "sensor.input1"
     output_par = "number.output"
@@ -488,11 +585,11 @@ async def test_outside_range(hass: HomeAssistant, setup_comp) -> None:  # noqa: 
     assert hass.states.get(pid).state == "20.0"
     assert hass.states.get(output_par).state == "0.0"
 
-    # Enable PID controller and repeat
+    # Turn on PID controller and repeat
     await hass.services.async_call(
         "pid_controller",
-        SERVICE_ENABLE,
-        {ATTR_VALUE: True, ATTR_ENTITY_ID: pid},
+        SERVICE_TURN_ON,
+        {ATTR_ENTITY_ID: pid},
         blocking=True,
     )
     await hass.async_block_till_done()
@@ -536,7 +633,7 @@ async def test_outside_range(hass: HomeAssistant, setup_comp) -> None:  # noqa: 
     await asyncio.sleep(cycle_time * 10)
 
 
-async def test_bad_value(hass: HomeAssistant, setup_comp, caplog) -> None:  # noqa: ANN001, ARG001
+async def test_bad_value(hass: HomeAssistant, setup_comp: None, caplog: None) -> None:  # noqa: ARG001
     """Test what happens if we send a bad value."""
     input_par = "sensor.input1"
     output_par = "number.output"
@@ -586,12 +683,11 @@ async def test_bad_value(hass: HomeAssistant, setup_comp, caplog) -> None:  # no
     # test if a warning was generated
     assert "WARNING" in caplog.text
 
-    # Now repeat with controller enabled
-    # Enable PID controller and repeat
+    # Now repeat with controller turned on
     await hass.services.async_call(
         "pid_controller",
-        SERVICE_ENABLE,
-        {ATTR_VALUE: True, ATTR_ENTITY_ID: pid},
+        SERVICE_TURN_ON,
+        {ATTR_ENTITY_ID: pid},
         blocking=True,
     )
     await hass.async_block_till_done()

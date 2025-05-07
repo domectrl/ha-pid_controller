@@ -24,6 +24,8 @@ from homeassistant.const import (
     CONF_NAME,
     CONF_UNIQUE_ID,
     EVENT_HOMEASSISTANT_START,
+    SERVICE_TURN_OFF,
+    SERVICE_TURN_ON,
     STATE_UNAVAILABLE,
     STATE_UNKNOWN,
 )
@@ -58,12 +60,10 @@ from .const import (
 from .pid_shared import PidBaseClass
 from .pid_shared.const import (
     ATTR_PID_ENABLE,
-    ATTR_VALUE,
     CONF_CYCLE_TIME,
     CONF_PID_KD,
     CONF_PID_KI,
     CONF_PID_KP,
-    SERVICE_ENABLE,
 )
 
 if TYPE_CHECKING:
@@ -124,11 +124,8 @@ async def _async_register_enable_service() -> None:
     """Register the enable-regulator service."""
     platform = entity_platform.async_get_current_platform()
 
-    platform.async_register_entity_service(
-        SERVICE_ENABLE,
-        cv.make_entity_service_schema({vol.Required(ATTR_VALUE): vol.Coerce(bool)}),
-        "async_enable",
-    )
+    platform.async_register_entity_service(SERVICE_TURN_ON, None, "async_turn_on")
+    platform.async_register_entity_service(SERVICE_TURN_OFF, None, "async_turn_off")
 
 
 class PidEntity(RestoreNumber, PidBaseClass):
@@ -162,6 +159,10 @@ class PidEntity(RestoreNumber, PidBaseClass):
         # setpoint initial to minimum value
         self._pid.setpoint = self._attr_native_min_value
         self._attr_native_value = self._pid.setpoint
+        self._attr_extra_state_attributes = super().pid_state_attributes
+        self._attr_extra_state_attributes[ATTR_INPUT1] = self.input_1
+        self._attr_extra_state_attributes[ATTR_INPUT2] = self.input_2
+        self._attr_extra_state_attributes[ATTR_OUTPUT] = self.output
 
     async def async_added_to_hass(self) -> None:
         """Handle entity about to be added to hass event."""
@@ -194,7 +195,7 @@ class PidEntity(RestoreNumber, PidBaseClass):
             # Start PID controller cycles
             await self._async_start_pid_cycle()
             if start_pid_controller:
-                await self.async_enable(value=True)
+                await self.async_turn_on()
 
         if self.hass.state == CoreState.running:
             await _async_startup()
@@ -223,16 +224,6 @@ class PidEntity(RestoreNumber, PidBaseClass):
             self.schedule_update_ha_state()
 
     @property
-    def capability_attributes(self) -> dict[str, Any]:
-        """Return capability attributes."""
-        attr = super().capability_attributes
-        attr.update(super().pid_capability_attributes)
-        attr[ATTR_INPUT1] = self.input_1
-        attr[ATTR_INPUT2] = self.input_2
-        attr[ATTR_OUTPUT] = self.output
-        return attr
-
-    @property
     def unique_id(self) -> str | None:
         """Return the unique id of the device."""
         return self._attr_unique_id
@@ -246,12 +237,7 @@ class PidEntity(RestoreNumber, PidBaseClass):
             name=self.name,
         )
 
-    async def async_enable(self, *, value: bool) -> None:
-        """Enable or disable PID regulator."""
-        _LOGGER.info("Enabling PID controller: %s!", str(value))
-        mode = PIDConst.MANUAL
-        if value:
-            mode = PIDConst.AUTOMATIC
+    async def _turn(self, mode: int) -> None:
         input_2 = math.nan
         if self._input_2:
             state_i2 = self.hass.states.get(self._input_2)
@@ -266,6 +252,14 @@ class PidEntity(RestoreNumber, PidBaseClass):
                 float(state_o.state),
                 input_2,
             )
+
+    async def async_turn_on(self) -> None:
+        """Turn the entity on."""
+        await self._turn(PIDConst.AUTOMATIC)
+
+    async def async_turn_off(self) -> None:
+        """Turn the entity off."""
+        await self._turn(PIDConst.MANUAL)
 
     @property
     def input_1(self) -> str:
@@ -326,12 +320,13 @@ class PidEntity(RestoreNumber, PidBaseClass):
                 state = self.hass.states.get(
                     self._output
                 )  # Copy attributes when writing new state (required for UI)
-                attr = {}
+                state_attr = {}
                 if state:
-                    attr = state.attributes.copy()
+                    state_attr = state.attributes.copy()
                 self.hass.states.async_set(
-                    self._output, pid_val, attr
+                    self._output, pid_val, state_attr
                 )  # Use set-state to be as much type-independent as possible
 
         self._attr_last_cycle_start = dt_util.utcnow().replace(microsecond=0)
-        self.async_write_ha_state()
+        self._attr_extra_state_attributes.update(self.pid_state_attributes)
+        self.schedule_update_ha_state()
