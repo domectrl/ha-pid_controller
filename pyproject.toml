@@ -1,7 +1,7 @@
 # This file is copied from Home Assistant and might be out of date
 
 [build-system]
-requires = ["setuptools==68.0.0", "wheel>=0.40,<0.46"]
+requires = ["setuptools==80.7.1", "wheel>=0.40,<0.46"]
 build-backend = "setuptools.build_meta"
 
 [project]
