@@ -1,6 +1,5 @@
 """The PID controller integration."""
 
-
 from typing import TYPE_CHECKING
 
 from .const import PLATFORMS
