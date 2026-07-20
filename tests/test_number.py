@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+from typing import TYPE_CHECKING
 
 import pytest
 from homeassistant.components.number import ATTR_VALUE, SERVICE_SET_VALUE
@@ -15,9 +16,7 @@ from homeassistant.const import (
     SERVICE_TURN_ON,
     Platform,
 )
-from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
-from homeassistant.helpers.typing import ConfigType
 from homeassistant.setup import async_setup_component
 from homeassistant.util.unit_system import METRIC_SYSTEM
 
@@ -35,6 +34,10 @@ from custom_components.pid_controller.pid_shared.const import (
     CONF_PID_KI,
     CONF_PID_KP,
 )
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.typing import ConfigType
 
 _LOGGER = logging.getLogger(__name__)
 

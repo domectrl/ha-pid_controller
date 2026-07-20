@@ -1,8 +1,9 @@
 """Test the PID controller integration."""
 
+from typing import TYPE_CHECKING
+
 import pytest
 from homeassistant.const import CONF_NAME
-from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -11,6 +12,9 @@ from custom_components.pid_controller.const import (
     CONF_OUTPUT,
     DOMAIN,
 )
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
 
 
 @pytest.mark.parametrize(

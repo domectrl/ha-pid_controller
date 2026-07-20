@@ -1,9 +1,13 @@
 """The PID controller integration."""
 
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+
+from typing import TYPE_CHECKING
 
 from .const import PLATFORMS
+
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

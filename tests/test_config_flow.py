@@ -1,9 +1,9 @@
 """Test the PID Controller config flow."""
 
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
-import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.components.number import (
     DEFAULT_MAX_VALUE,
@@ -11,7 +11,6 @@ from homeassistant.components.number import (
     DEFAULT_STEP,
 )
 from homeassistant.const import CONF_MAXIMUM, CONF_MINIMUM, CONF_MODE, CONF_NAME
-from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -34,6 +33,10 @@ from custom_components.pid_controller.pid_shared.const import (
     CONF_PID_KI,
     CONF_PID_KP,
 )
+
+if TYPE_CHECKING:
+    import voluptuous as vol
+    from homeassistant.core import HomeAssistant
 
 
 @pytest.mark.parametrize(

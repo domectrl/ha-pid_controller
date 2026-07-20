@@ -1,8 +1,7 @@
 """Config flow for pid integration."""
 
 import logging
-from collections.abc import Mapping
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import voluptuous as vol
 from homeassistant.components.input_number import DOMAIN as INPUT_NUMBER_DOMAIN
@@ -47,6 +46,9 @@ from .pid_shared.const import (
     CONF_PID_KI,
     CONF_PID_KP,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 _LOGGER = logging.getLogger(__name__)
 
