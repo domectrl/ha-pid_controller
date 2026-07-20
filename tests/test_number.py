@@ -60,9 +60,26 @@ async def _setup_controller(  # noqa: PLR0913
 
     The input and output device do really exist, only set state.
     """
-    hass.states.async_set(input_par, input_value)
+    hass.states.async_set(input_par, str(input_value))
     if output_par:
-        hass.states.async_set(output_par, output_value)
+        assert await async_setup_component(
+            hass,
+            "input_number",
+            {
+                "input_number": {
+                    "output": {
+                        "min": -100,
+                        "max": 100,
+                        "name": "Output",
+                        "step": 0.5,
+                        "initial": output_value,
+                    }
+                }
+            },
+        )
+        await hass.async_block_till_done()
+        # hass.states.async_set(output_par, output_value)
+
     assert await async_setup_component(hass, Platform.NUMBER, config)
     await hass.async_block_till_done()
 
@@ -77,7 +94,7 @@ async def test_pid_controller_turn_on_off(
     Using only Kp: output equals error.
     """
     input_par = "sensor.input1"
-    output_par = "number.output"
+    output_par = "input_number.output"
     pid = f"{Platform.NUMBER}.pid"
 
     cycle_time = 0.01  # Cycle time in seconds
@@ -159,7 +176,7 @@ async def test_pid_controller_turn_on_off(
 async def test_pid_controller_kp(hass: HomeAssistant, setup_comp: None) -> None:  # noqa: ARG001
     """Test function Kp for normal pid controller (number): output equals error."""
     input_par = "sensor.input1"
-    output_par = "number.output"
+    output_par = "input_number.output"
     pid = f"{Platform.NUMBER}.pid"
 
     cycle_time = 0.01  # Cycle time in seconds
@@ -219,16 +236,8 @@ async def test_pid_controller_kp(hass: HomeAssistant, setup_comp: None) -> None:
 async def test_pid_controller_kp_reverse(hass: HomeAssistant, setup_comp: None) -> None:  # noqa: ARG001
     """Test function Kp for normal pid controller (number): output equals error."""
     input_par = "sensor.input1"
-    output_par = "number.output"
+    output_par = "input_number.output"
     pid = f"{Platform.NUMBER}.pid"
-
-    # Min/max of the controller are set up by output limits, so assign
-    hass.states.async_set(output_par, 0.0)
-    state = hass.states.get(output_par)
-    attr = state.attributes.copy()
-    attr["min"] = -100.0
-    attr["max"] = 100.0
-    hass.states.async_set(output_par, 0.0, attr)
 
     cycle_time = 0.01  # Cycle time in seconds
     config = {
@@ -244,7 +253,7 @@ async def test_pid_controller_kp_reverse(hass: HomeAssistant, setup_comp: None) 
             CONF_CYCLE_TIME: {"seconds": cycle_time},
         }
     }
-    await _setup_controller(hass, config, input_par, None, 10.0, 0.0)
+    await _setup_controller(hass, config, input_par, output_par, 10.0, 0.0)
 
     # On initialize value is 0, so output should be off. Check all states.
     assert hass.states.get(pid).state == "0.0"
@@ -308,7 +317,7 @@ async def test_pid_controller_kp_differential(
     """Test function Kp for normal pid controller (number): output equals error."""
     input_par = "sensor.input1"
     input2_par = "sensor.input2"
-    output_par = "number.output"
+    output_par = "input_number.output"
     pid = f"{Platform.NUMBER}.pid"
 
     cycle_time = 0.01  # Cycle time in seconds
@@ -371,7 +380,7 @@ async def test_pid_controller_kp_differential(
 async def test_pid_controller_ki(hass: HomeAssistant, setup_comp: None) -> None:  # noqa: ARG001
     """Test Ki function for normal pid controller (number): output should run to max."""
     input_par = "sensor.input1"
-    output_par = "number.output"
+    output_par = "input_number.output"
     pid = f"{Platform.NUMBER}.pid"
     cycle_time = 0.05  # Cycle time in seconds
 
@@ -432,7 +441,7 @@ async def test_pid_controller_ki(hass: HomeAssistant, setup_comp: None) -> None:
 async def test_pid_controller_kd(hass: HomeAssistant, setup_comp: None) -> None:  # noqa: ARG001
     """Test Kd function for normal pid controller (number): output should stay 0."""
     input_par = "sensor.input1"
-    output_par = "number.output"
+    output_par = "input_number.output"
     pid = f"{Platform.NUMBER}.pid"
     cycle_time = 0.01  # Cycle time in seconds
 
@@ -496,7 +505,7 @@ async def test_output_does_not_exist(
 ) -> None:
     """Test output does not exist."""
     input_par = "sensor.input1"
-    output_par = "number.output"
+    output_par = "input_number.output"
     cycle_time = 0.01  # Cycle time in seconds
 
     # clear logging
@@ -530,7 +539,7 @@ async def test_output_does_not_exist(
 async def test_outside_range(hass: HomeAssistant, setup_comp: None) -> None:  # noqa: ARG001
     """Test what happens if we write a value outside the range."""
     input_par = "sensor.input1"
-    output_par = "number.output"
+    output_par = "input_number.output"
     pid = f"{Platform.NUMBER}.pid"
     cycle_time = 0.01  # Cycle time in seconds
     minimum = 20.0
@@ -636,7 +645,7 @@ async def test_outside_range(hass: HomeAssistant, setup_comp: None) -> None:  # 
 async def test_bad_value(hass: HomeAssistant, setup_comp: None, caplog: None) -> None:  # noqa: ARG001
     """Test what happens if we send a bad value."""
     input_par = "sensor.input1"
-    output_par = "number.output"
+    output_par = "input_number.output"
     pid = f"{Platform.NUMBER}.pid"
     cycle_time = 0.01  # Cycle time in seconds
 

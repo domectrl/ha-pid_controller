@@ -142,6 +142,7 @@ class PidEntity(RestoreNumber, PidBaseClass):
         self._attr_last_cycle_start = str(dt_util.utcnow().replace(microsecond=0))
         self._attr_timed_output = ("", 0.0)
         self._output = config[CONF_OUTPUT]
+        self._output_domain = None
         self._input_1 = config[CONF_INPUT1]
         self._input_2 = config.get(CONF_INPUT2, "")
         self._attr_unique_id = unique_id
@@ -187,6 +188,7 @@ class PidEntity(RestoreNumber, PidBaseClass):
             # of the PID regulator to that
             entity = self.hass.states.get(self._output)
             if entity:
+                self._output_domain = entity.domain
                 attr_min = entity.attributes.get("min", 0.0)
                 attr_max = entity.attributes.get("max", 100.0)
                 self._output_step = entity.attributes.get("step", 0.01)
@@ -319,15 +321,14 @@ class PidEntity(RestoreNumber, PidBaseClass):
                 pid_val = (
                     round(self._pid.output / self._output_step) * self._output_step
                 )  # Round off to step
-                state = self.hass.states.get(
-                    self._output
-                )  # Copy attributes when writing new state (required for UI)
-                state_attr = {}
-                if state:
-                    state_attr = state.attributes.copy()
-                self.hass.states.async_set(
-                    self._output, pid_val, state_attr
-                )  # Use set-state to be as much type-independent as possible
+                await self.hass.services.async_call(
+                    domain=self._output_domain,
+                    service="set_value",
+                    service_data={
+                        "entity_id": self._output,
+                        "value": pid_val,
+                    },
+                )
                 self._attr_last_cycle_start = dt_util.utcnow().replace(microsecond=0)
                 self._attr_extra_state_attributes.update(self.pid_state_attributes)
                 self.schedule_update_ha_state()
