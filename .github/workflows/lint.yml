@@ -24,13 +24,11 @@ jobs:
           python-version: "3.14"
           cache: "pip"
           cache-dependency-path: |
-            requirements_common.txt
-            requirements_lint.txt
+            requirements_TEST.txt
 
       - name: Install requirements
         run: |
-          python3 -m pip install -r requirements_common.txt
-          python3 -m pip install -r requirements_lint.txt
+          python3 -m pip install -r requirements_TEST.txt
 
       - name: Lint
         run: python3 -m ruff check .
