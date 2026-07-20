@@ -4,6 +4,9 @@ set -e
 
 cd "$(dirname "$0")/.."
 
+# Activate the virtual environment
+. ~/opt/venv/bin/activate
+
 # Create config dir if not present
 if [[ ! -d "${PWD}/config" ]]; then
     mkdir -p "${PWD}/config"

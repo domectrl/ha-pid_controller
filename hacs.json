@@ -2,7 +2,7 @@
     "name": "PID Controller",
     "filename": "pid_controller.zip",
     "hide_default_branch": true,
-    "homeassistant": "2023.8.4",
+    "homeassistant": "2026.6.4",
     "render_readme": true,
     "zip_release": true
 }

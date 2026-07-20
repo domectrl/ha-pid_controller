@@ -4,4 +4,8 @@ set -e
 
 cd "$(dirname "$0")/.."
 
+# Make a virtual environment
+python3 -m venv ~/opt/venv
+
+ruff format .
 ruff check . --fix
