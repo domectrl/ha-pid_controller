@@ -1,5 +1,4 @@
-colorlog==6.10.1
-homeassistant==2026.6.4
+-r requirements.txt
 pytest-homeassistant-custom-component==0.13.340 # is Matching version for 2026.6.4
 pip>=21.3.1
 ruff==0.15.21

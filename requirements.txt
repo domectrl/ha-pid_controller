@@ -1,4 +1,4 @@
+-r requirements_common.txt
+-r requirements_lint.txt
 colorlog==6.10.1
 homeassistant==2026.6.4
-pip>=21.3.1
-ruff==0.15.21
