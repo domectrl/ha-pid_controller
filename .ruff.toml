@@ -29,5 +29,5 @@ keep-runtime-typing = true
 max-complexity = 25
 
 [lint.isort]
-# Our own generated protobuf
-known-first-party = ["custom_components.pid_controller"]
+# Notify the github ruff that our pid controller is native
+known-first-party = ["custom_components.pid_controller/pid_shared"]
