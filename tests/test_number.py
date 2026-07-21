@@ -5,20 +5,36 @@ import logging
 from typing import TYPE_CHECKING
 
 import pytest
-from custom_components.pid_controller.const import (CONF_INPUT1, CONF_INPUT2,
-                                                    CONF_OUTPUT, CONF_PID_DIR,
-                                                    DOMAIN, PID_DIR_REVERSE)
-from custom_components.pid_controller.pid_shared.const import (CONF_CYCLE_TIME,
-                                                               CONF_PID_KD,
-                                                               CONF_PID_KI,
-                                                               CONF_PID_KP)
 from homeassistant.components.number import ATTR_VALUE, SERVICE_SET_VALUE
-from homeassistant.const import (ATTR_ENTITY_ID, CONF_MAXIMUM, CONF_MINIMUM,
-                                 CONF_NAME, CONF_PLATFORM, SERVICE_TURN_OFF,
-                                 SERVICE_TURN_ON, Platform)
+from homeassistant.const import (
+    ATTR_ENTITY_ID,
+    CONF_MAXIMUM,
+    CONF_MINIMUM,
+    CONF_NAME,
+    CONF_PLATFORM,
+    SERVICE_TURN_OFF,
+    SERVICE_TURN_ON,
+    Platform,
+)
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.setup import async_setup_component
 from homeassistant.util.unit_system import METRIC_SYSTEM
+
+
+from custom_components.pid_controller.const import (
+    CONF_INPUT1,
+    CONF_INPUT2,
+    CONF_OUTPUT,
+    CONF_PID_DIR,
+    DOMAIN,
+    PID_DIR_REVERSE,
+)
+from custom_components.pid_controller.pid_shared.const import (
+    CONF_CYCLE_TIME,
+    CONF_PID_KD,
+    CONF_PID_KI,
+    CONF_PID_KP,
+)
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
