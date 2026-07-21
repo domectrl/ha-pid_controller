@@ -19,6 +19,6 @@
     "dvg-pid-controller==2.2.0"
   ],
   "ssdp": [],
-  "version": "0.9.5",
+  "version": "0.9.7",
   "zeroconf": []
 }
