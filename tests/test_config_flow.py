@@ -4,25 +4,35 @@ from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
-from custom_components.pid_controller.const import (CONF_INPUT1, CONF_OUTPUT,
-                                                    CONF_PID_DIR, CONF_STEP,
-                                                    DEFAULT_CYCLE_TIME,
-                                                    DEFAULT_MODE,
-                                                    DEFAULT_PID_DIR,
-                                                    DEFAULT_PID_KD,
-                                                    DEFAULT_PID_KI,
-                                                    DEFAULT_PID_KP, DOMAIN)
-from custom_components.pid_controller.pid_shared.const import (CONF_CYCLE_TIME,
-                                                               CONF_PID_KD,
-                                                               CONF_PID_KI,
-                                                               CONF_PID_KP)
 from homeassistant import config_entries
-from homeassistant.components.number import (DEFAULT_MAX_VALUE,
-                                             DEFAULT_MIN_VALUE, DEFAULT_STEP)
-from homeassistant.const import (CONF_MAXIMUM, CONF_MINIMUM, CONF_MODE,
-                                 CONF_NAME)
+from homeassistant.components.number import (
+    DEFAULT_MAX_VALUE,
+    DEFAULT_MIN_VALUE,
+    DEFAULT_STEP,
+)
+from homeassistant.const import CONF_MAXIMUM, CONF_MINIMUM, CONF_MODE, CONF_NAME
 from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+from custom_components.pid_controller.const import (
+    CONF_INPUT1,
+    CONF_OUTPUT,
+    CONF_PID_DIR,
+    CONF_STEP,
+    DEFAULT_CYCLE_TIME,
+    DEFAULT_MODE,
+    DEFAULT_PID_DIR,
+    DEFAULT_PID_KD,
+    DEFAULT_PID_KI,
+    DEFAULT_PID_KP,
+    DOMAIN,
+)
+from custom_components.pid_controller.pid_shared.const import (
+    CONF_CYCLE_TIME,
+    CONF_PID_KD,
+    CONF_PID_KI,
+    CONF_PID_KP,
+)
 
 if TYPE_CHECKING:
     import voluptuous as vol
