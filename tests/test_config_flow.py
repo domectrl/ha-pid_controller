@@ -3,7 +3,6 @@
 from typing import TYPE_CHECKING
 from unittest.mock import patch
 
-
 import pytest
 from homeassistant import config_entries
 from homeassistant.components.number import (

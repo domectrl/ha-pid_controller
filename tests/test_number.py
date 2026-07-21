@@ -20,7 +20,6 @@ from homeassistant.exceptions import ServiceValidationError
 from homeassistant.setup import async_setup_component
 from homeassistant.util.unit_system import METRIC_SYSTEM
 
-
 from custom_components.pid_controller.const import (
     CONF_INPUT1,
     CONF_INPUT2,
