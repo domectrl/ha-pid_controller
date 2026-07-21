@@ -33,7 +33,7 @@ jobs:
           python3 -m pip install -r requirements_lint.txt
 
       - name: Lint
-        run: python3 -m ruff check .
+        run: python3 -m ruff check -v .
 
       - name: Format
         run: python3 -m ruff format . --check
